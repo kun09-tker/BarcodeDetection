@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-image = cv2.imread("imgs/images (10).jpg")
+image = cv2.imread("imgs/images (8).jpg")
 
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -20,16 +20,16 @@ cv2.imshow("SD_gray", thresh)
 lines = cv2.HoughLinesP(thresh, 1, np.pi, 10, minLineLength=10, maxLineGap=7)
 for line in lines:
    x1, y1, x2, y2 = line[0]
-   cv2.line(thresh, (x1, y1), (x2, y2), (255, 255, 255), 1)
+   cv2.line(thresh, (x1, y1), (x2, y2), (255, 255, 255), 2)
 
 cv2.imshow("Input", thresh)
-print(thresh)
+
 thresh = cv2.bitwise_and(bitwise_not,thresh)
 
 cv2.imshow("Output", thresh)
 coords = np.column_stack(np.where(thresh > 0))
 angle = cv2.minAreaRect(coords)[-1]
-
+print(angle)
 if angle < -45:
 	angle = -(90 + angle)
 else:

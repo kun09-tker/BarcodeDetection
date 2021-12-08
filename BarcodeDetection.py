@@ -12,7 +12,7 @@ def SlewRotation(image):
     lines = cv2.HoughLinesP(thresh, 1, np.pi, 10, minLineLength=10, maxLineGap=7)
     for line in lines:
         x1, y1, x2, y2 = line[0]
-        cv2.line(thresh, (x1, y1), (x2, y2), (255, 255, 255), 1)
+        cv2.line(thresh, (x1, y1), (x2, y2), (255, 255, 255), 2)
     thresh = cv2.bitwise_and(bitwise_not, thresh)
     coords = np.column_stack(np.where(thresh > 0))
     angle = cv2.minAreaRect(coords)[-1]
@@ -65,11 +65,12 @@ def HoughTransform(image):
             box = np.int0(cv2.boxPoints(rect))
             cv2.drawContours(edges, [box], -1, (0, 255, 0), -1)
             cv2.drawContours(img, [box], -1, (0, 255, 0), -1)
-    edges = cv2.bitwise_not(edges)
     return edges
 
 def Combine(image, Sobel,HoughTransform):
-    opened = cv2.subtract(Sobel, HoughTransform)
+    cv2.imshow("Sobel",Sobel)
+    cv2.imshow("HoughTransform",HoughTransform)
+    opened = cv2.bitwise_and(Sobel, HoughTransform)
     opened = cv2.erode(opened, None, iterations=2)
     opened = cv2.dilate(opened, None, iterations=7)
     cnts, hierarchy = cv2.findContours(opened.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
@@ -96,6 +97,6 @@ def BarcodeDetection(path_image):
     result = Combine(image,sobel,houghtransform)
     return result
 
-result = BarcodeDetection("imgs/images (10).jpg")
-cv2.imshow("Output",result)
-cv2.waitKey(0)
+# result = BarcodeDetection("imgs/images (8).jpg")
+# cv2.imshow("Output",result)
+# cv2.waitKey(0)

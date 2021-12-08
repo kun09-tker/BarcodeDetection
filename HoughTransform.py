@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-img = cv2.imread("imgs/images (5).jpg")
+img = cv2.imread("imgs/images (8).jpg")
 img_copy = img.copy()
 img = cv2.GaussianBlur(img,(1,9),0)
 
