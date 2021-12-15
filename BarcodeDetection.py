@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def SlewRotation(image):
+def RotationImage(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     kernel = np.array([[0, -1, 0],
                        [-1, 4, -1],
@@ -27,7 +27,7 @@ def SlewRotation(image):
         flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
     return rotated
 
-def Sobel(image):
+def AreaDetection(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gradX = cv2.Sobel(gray, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
     gradY = cv2.Sobel(gray, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
@@ -35,12 +35,23 @@ def Sobel(image):
     gradient = cv2.convertScaleAbs(gradient)
     blurred = cv2.blur(gradient, (3, 3))
     (_, thresh) = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 8))
-    opened = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-    return opened
+    dilate = cv2.dilate(thresh, None, iterations=1)
+    thresh = cv2.subtract(dilate, thresh)
+    cnts, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
+    temp_c = sorted(cnts, key=cv2.contourArea, reverse=True)
+    max = np.max([c.shape[0] for c in temp_c])
+    for c in temp_c:
+        if c.shape[0] == max:
+            rect = cv2.minAreaRect(c)
+            box = np.int0(cv2.boxPoints(rect))
+            mask = np.zeros_like(image)
+            cv2.drawContours(mask, [box], -1, (255, 255, 255), -1)
+            out = cv2.bitwise_not(np.zeros_like(image))
+            out[mask == 255] = image[mask == 255]
+    return out
 
-def HoughTransform(image):
-    img = cv2.GaussianBlur(image, (1, 9), 0)
+def BarcodeDetection(image):
+    img = cv2.GaussianBlur(image, (1, 5), 0)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     kernel = np.array([[0, -1, 0],
                        [-1, 4, -1],
@@ -60,43 +71,42 @@ def HoughTransform(image):
     temp_c = sorted(cnts, key=cv2.contourArea, reverse=True)
     max = np.max([c.shape[0] for c in temp_c])
     for c in temp_c:
-        if c.shape[0] / max * 100 <= 40:
+        if c.shape[0]!=max:
             rect = cv2.minAreaRect(c)
             box = np.int0(cv2.boxPoints(rect))
             cv2.drawContours(edges, [box], -1, (0, 255, 0), -1)
-            cv2.drawContours(img, [box], -1, (0, 255, 0), -1)
     return edges
 
-def Combine(image, Sobel,HoughTransform):
-    cv2.imshow("Sobel",Sobel)
-    cv2.imshow("HoughTransform",HoughTransform)
-    opened = cv2.bitwise_and(Sobel, HoughTransform)
-    opened = cv2.erode(opened, None, iterations=2)
-    opened = cv2.dilate(opened, None, iterations=7)
-    cnts, hierarchy = cv2.findContours(opened.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
+def DrawContours(image,processing_img):
+    cnts, hierarchy = cv2.findContours(processing_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
     temp_c = sorted(cnts, key=cv2.contourArea, reverse=True)
     max = np.max([c.shape[0] for c in temp_c])
 
     for c in temp_c:
-        if c.shape[0] / max * 100 >= 40:
-            print(c.shape)
+        if c.shape[0] == max:
             rect = cv2.minAreaRect(c)
             box = np.int0(cv2.boxPoints(rect))
-            cv2.drawContours(image, [box], -1, (0, 255, 0), 3)
-    return image
+            x, y, w, h = cv2.boundingRect(c)
+            mask = np.zeros_like(image)
+            cv2.drawContours(mask, [box], -1, (255, 255, 255), -1)
+            out = image.copy()[y:y+h, x:x+w]
+            cv2.drawContours(image, [box], -1, (0, 255, 0), 2)
+    return image,out
 
-def BarcodeDetection(path_image):
+def Main(path_image):
     image = cv2.imread(path_image)
     cv2.imshow("Input",image)
-    image = SlewRotation(image)
-    #cv2.imshow("Rotation",image)
-    sobel = Sobel(image)
-    #cv2.imshow("S",sobel)
-    houghtransform = HoughTransform(image)
-    #cv2.imshow("H", houghtransform)
-    result = Combine(image,sobel,houghtransform)
-    return result
+    image = AreaDetection(image)
+    image = RotationImage(image)
+    houghtransform = BarcodeDetection(image)
+    image_detection,barcode = DrawContours(image.copy(),houghtransform)
+    return image_detection,barcode
 
-# result = BarcodeDetection("imgs/images (8).jpg")
-# cv2.imshow("Output",result)
-# cv2.waitKey(0)
+path = "imgs/images (7).jpg"
+image_detection,barcode = Main(path)
+image = cv2.imread(path)
+cv2.imshow("BarcodeDetection",image_detection)
+barcode = cv2.resize(barcode,None,None,2,2,interpolation=cv2.INTER_CUBIC)
+cv2.imshow("Barcode",barcode)
+cv2.waitKey(0)
+

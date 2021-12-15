@@ -1,20 +1,27 @@
-import numpy as np
 import cv2
-import  BarcodeDetection
+import numpy as np
 
-image = cv2.imread("imgs/images (10).jpg")
-image = BarcodeDetection.SlewRotation(image)
-sobel = BarcodeDetection.Sobel(image)
+# Turn on Laptop's webcam
+cap = cv2.VideoCapture(0)
 
-cnts,hierarchy = cv2.findContours(sobel.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2:]
+while True:
 
-temp_c = sorted(cnts, key = cv2.contourArea, reverse = True)
-max = np.max([c.shape[0] for c in temp_c])
-for c in temp_c:
-    if c.shape[0]/max*100 > 40:
-        print(c.shape[0]/max*100)
-        rect = cv2.minAreaRect(c)
-        box = np.int0(cv2.boxPoints(rect))
-        cv2.drawContours(image, [box], -1, (0, 255, 0), 2)
-cv2.imshow("Outline", image)
-cv2.waitKey(0)
+    ret, frame = cap.read()
+
+    # Locate points of the documents or object which you want to transform
+    pts1 = np.float32([[0, 260], [640, 260], [0, 400], [640, 400]])
+    pts2 = np.float32([[0, 0], [400, 0], [0, 640], [400, 640]])
+
+    # Apply Perspective Transform Algorithm
+    matrix = cv2.getPerspectiveTransform(pts1, pts2)
+    result = cv2.warpPerspective(frame, matrix, (500, 600))
+    # Wrap the transformed image
+
+    cv2.imshow('frame', frame)  # Inital Capture
+    cv2.imshow('frame1', result)  # Transformed Capture
+
+    if cv2.waitKey(24) == 27:
+        break
+
+cap.release()
+cv2.destroyAllWindows()

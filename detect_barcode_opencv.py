@@ -20,9 +20,9 @@ blurred = cv2.blur(gradient, (3, 3))
 cv2.imshow("threshed",cv2.resize(thresh,None, fx=1, fy=1, interpolation = cv2.INTER_CUBIC))
 
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 8))
-opened = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
 
-cv2.imshow("morphology",cv2.resize(opened,None, fx=1, fy=1, interpolation = cv2.INTER_CUBIC))
+cv2.imshow("morphology",cv2.resize(thresh,None, fx=1, fy=1, interpolation = cv2.INTER_CUBIC))
 
 # HoughTransform
 
