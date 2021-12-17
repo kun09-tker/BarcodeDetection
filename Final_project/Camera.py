@@ -3,8 +3,8 @@ from BarcodeDetection_Camera import AreaDetection
 from pyzbar.pyzbar import decode
 
 cap = cv2.VideoCapture(0)
-cap.set(3,1920)
-cap.set(4,1080)
+cap.set(3,637)
+cap.set(4,280)
 name_code = ""
 while True:
     ret, frame = cap.read()

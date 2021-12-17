@@ -8,6 +8,9 @@ import math
 import scipy.signal as ss
 from tkinter import filedialog
 from BarcodeDetection import *
+from PIL import Image, ImageTk
+from BarcodeDetection_Camera import AreaDetection
+from pyzbar.pyzbar import decode
 matplt = False
 filename = None
 original_img = None
@@ -16,9 +19,14 @@ board = None
 axis = None
 figure = None
 toolbar = None
-height_figSize = 5.6
-width_figSize = 7.83
-
+height_figSize = 5.72
+width_figSize = 6.4
+cameraOn=False
+cap=None
+loop =None
+camera1=None
+camera2=None
+barcodeLabel=None
 
 def remove_oldPlot():
     global board
@@ -36,23 +44,27 @@ def open_File(parent):
     global matplt
     global figure
     global toolbar
-    filename = filedialog.askopenfilename()
-    print(filename)
-    original_img = cv2.imread(filename, 1)
-    represen_img = original_img
-    remove_oldPlot()
-    figure = plt.Figure(figsize=(width_figSize, height_figSize))
-    axis = figure.add_subplot(111)
-    original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
-    axis.imshow(original_img)
-    figure.set_facecolor('#98D6EA')
-    board = FigureCanvasTkAgg(figure, master=parent)
-    board.draw()
-    board.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
-    toolbar = NavigationToolbar2Tk(board, parent)
-    toolbar.update()
-    board.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=1)
-    matplt = True
+    turnOff()
+    try:
+        filename = filedialog.askopenfilename()
+        print(filename)
+        original_img = cv2.imread(filename, 1)
+        represen_img = original_img
+        remove_oldPlot()
+        figure = plt.Figure(figsize=(width_figSize, height_figSize))
+        axis = figure.add_subplot(111)
+        original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
+        axis.imshow(original_img)
+        figure.set_facecolor('#98D6EA')
+        board = FigureCanvasTkAgg(figure, master=parent)
+        board.draw()
+        board.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
+        toolbar = NavigationToolbar2Tk(board, parent)
+        toolbar.update()
+        board.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=1)
+        matplt = True
+    except:
+        pass
 
 
 def save_File(parent):
@@ -72,6 +84,7 @@ def add_Noise(parent):
         global board
         global figure
         global toolbar
+        turnOff()
         gauss = np.random.normal(0, 1, original_img.size)
         gauss = gauss.reshape(
             original_img.shape[0], original_img.shape[1], original_img.shape[2]).astype('uint8')
@@ -97,7 +110,7 @@ Btn_Sliders = {}
 # BarcodeDetection
 
 
-def barCode_Detect(parent):
+def bcDetect_Image(parent):
     if matplt:
         global original_img
         global represen_img
@@ -125,6 +138,83 @@ def barCode_Detect(parent):
         toolbar = NavigationToolbar2Tk(board, parent)
         toolbar.update()
         board.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=1)
+
+def turnOff():
+    global camera2
+    global camera1
+    global loop
+    global cap
+    global cameraOn
+    global barcodeLabel 
+    if cameraOn:
+        camera1.after_cancel(loop)
+        cap.release()
+        camera1.destroy()
+        camera2.destroy()
+        barcodeLabel.destroy()
+        cameraOn=False
+
+def show_frame():
+    global camera1
+    global camera2
+    global loop
+    global cap
+    global barcodeLabel 
+    _, frame = cap.read()
+    name_code=""
+    # frame = cv2.flip(frame, 1)
+    b,r = AreaDetection(frame)
+    if r is not None:
+        d = decode(r)
+        if len(d) > 0:
+            name_code = str(d[0].data)
+            barcodeLabel.config(text="Barcode:\n"+name_code)
+        cv2.putText(b,name_code, (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_4)
+        gray = cv2.cvtColor(r, cv2.COLOR_BGR2GRAY)
+        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(9, 9))
+        gray = clahe.apply(gray)
+        gray = cv2.cvtColor(gray, cv2.COLOR_BGR2RGBA)
+        gray = Image.fromarray(gray)
+        gray = ImageTk.PhotoImage(image=gray)
+        camera2.imgtk = gray
+        camera2.configure(image=gray)
+    else:
+        name_code = ""
+        barcodeLabel.config(text="Barcode: Không có")
+        cv2.putText(b, name_code, (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_4)
+        camera2.configure(image='')
+    b = cv2.cvtColor(b, cv2.COLOR_BGR2RGBA)
+    b = Image.fromarray(b)
+    b = ImageTk.PhotoImage(image=b)
+    camera1.imgtk = b
+    camera1.configure(image=b)
+    # lmain.after(10, lambda: show_frame(lmain,cap)) 
+    loop = camera1.after(10, lambda: show_frame())
+
+def bcDetect_Camera(LFrame,window):
+    global cameraOn
+    global cap
+    global camera1
+    global camera2
+    global matplt
+    global barcodeLabel 
+    remove_Sliders()
+    remove_oldPlot()
+    cap = cv2.VideoCapture(0)
+    cap.set(3,637)
+    cap.set(4,280)
+    camera1 = Label(window,bg="#98D6EA",height=280,width=637)
+    camera2 = Label(window,bg="#98D6EA",height=282,width=637)
+    barcodeLabel = ttk.Label(LFrame,style="TLabel",text="Barcode: Không có")
+    # camera1.grid(row=0, column=0)
+    # camera2.grid(row=1, column=0)
+    camera1.place(x=215,y=5)
+    camera2.place(x=215,y=320)
+    barcodeLabel.grid(row=1,column=0,sticky=W,pady=(0,5),padx=(7,0))
+    cameraOn=True
+    matplt=False
+    show_frame()
+
 
 
 # Gamma

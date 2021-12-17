@@ -8,13 +8,14 @@ from Funct import *
 window = Tk()
 window = Style(theme='cosmo').master
 window.title("DarkSouls's App")
-window.geometry("1010x605")
+window.geometry("880x620")
 window.resizable(False, False)
 # background_label.place(x=0, y=0, relwidth=1, relheight=1)
 ##
 # Label Frame
 ##
 ##
+BD_LFrame = ttk.LabelFrame(window, style='TLabelframe',text="Nhận dạng barcode")
 SL_LFrame = ttk.LabelFrame(window, style='TLabelframe', text="Chỉnh độ sáng")
 SS_LFrame = ttk.LabelFrame(window, style='TLabelframe', text="Chỉnh độ nét")
 DB_LFrame = ttk.LabelFrame(window, style='TLabelframe', text="Xóa background")
@@ -26,6 +27,20 @@ RC_LFrame = ttk.LabelFrame(window, style='TLabelframe',
 # MenuButton
 ##
 option_var = StringVar()
+##########################Nhận dạng bar code#############################
+BDetect_MButton = ttk.Menubutton(BD_LFrame,text="Choose the medthod",style='TMenubutton')
+BDetect_Menu = Menu(BDetect_MButton)
+BDetect_labels = ['Image','Camera']
+BDetect_command = [
+    lambda: bcDetect_Image(canvas),
+    lambda: bcDetect_Camera(BD_LFrame,window)
+]
+for option, command in zip(BDetect_labels, BDetect_command):
+    BDetect_Menu.add_radiobutton(
+        label=option, command=command, variable=option_var)
+    BDetect_Menu.add_separator()
+BDetect_MButton["menu"] = BDetect_Menu
+
 ##########################Chỉnh độ sáng#############################
 SLight_MButton = ttk.Menubutton(
     SL_LFrame, text="Choose the method", style='TMenubutton')
@@ -97,9 +112,8 @@ DEdge_MButton["menu"] = DEdge_Menu
 # Board
 # 002b36
 img_logo = PhotoImage(file='.\DarkSouls_logo.png')
-canvas = Canvas(window, height=590, width=780, bg="#98D6EA")
-canvas.create_image(290, 150, image=img_logo, anchor=NW)
-# Btn.Gamma_Slide(SL_LFrame)
+canvas = Canvas(window, height=599, width=640, bg="#98D6EA")
+canvas.create_image(225, 160, image=img_logo, anchor=NW)
 ##
 # Button
 ##
@@ -113,8 +127,8 @@ Save_Btn = ttk.Button(window, style='primary.Outline.TButton',
                       text="Save Image", image=img_save, compound=LEFT, command=lambda: save_File(canvas))
 addNoise_Btn = ttk.Button(window, style='primary.Outline.TButton',
                           text="Add noise", image=img_ANoise, compound=LEFT, command=lambda: add_Noise(canvas))
-barCode_Btn = ttk.Button(window, style='primary.Outline.TButton',
-                         text="Bar code detection", image=img_Barcode, compound=LEFT, command=lambda: barCode_Detect(canvas))
+barCode_Btn = ttk.Button(BD_LFrame, style='primary.Outline.TButton',
+                         text="Bar code detection", image=img_Barcode, compound=LEFT, command=lambda: bcDetect_Image(canvas))
 ##
 # Setting Place
 ##
@@ -122,11 +136,8 @@ barCode_Btn = ttk.Button(window, style='primary.Outline.TButton',
 Open_Btn.grid(row=0, column=0, ipadx=30, padx=(22, 0), pady=5, sticky="nw")
 Save_Btn.grid(row=1, column=0, ipadx=31.75, padx=(15.5, 0), pady=(0, 5), sticky="n")
 addNoise_Btn.grid(row=2, column=0, ipadx=37, padx=(19, 0), sticky="n")
-barCode_Btn.grid(row=3, column=0, ipadx=12,
-                 padx=(19, 0), pady=(5, 0), sticky="n")
-# zoomIn_Btn.grid(row=1, column=1, padx=(10, 0), sticky="w")
-# zoomOut_Btn.grid(row=1, column=2, sticky="w")
-# Rotate_Btn.grid(row=1, column=3, sticky="w")
+BD_LFrame.grid(row=3, column=0, padx=(16,0))
+BDetect_MButton.grid(row=0, column=0, padx=7, pady=10, columnspan=2)
 SL_LFrame.grid(row=4, column=0, padx=(16, 0))
 SLight_MButton.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
 SS_LFrame.grid(row=5, column=0, padx=(16, 0))
@@ -141,4 +152,6 @@ DEdge_MButton.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
 canvas.place(x=215, y=5)
 # Histrogram_B`utton.grid(row=0,column=0,padx=10,pady=10)`
 # window.after(10000,lambda:window.destroy())
+# show_frame(lmain,cap)
 window.mainloop()
+

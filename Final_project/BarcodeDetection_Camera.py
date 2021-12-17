@@ -13,7 +13,7 @@ def AreaDetection(image):
     (_, thresh) = cv2.threshold(blurred, 150, 255, cv2.THRESH_BINARY)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 30))
     dilate = cv2.morphologyEx(thresh, cv2.MORPH_ERODE, kernel)
-    cv2.imshow("dilate", dilate)
+    # cv2.imshow("dilate", dilate)
     out = None
     cnts, hierarchy = cv2.findContours(dilate.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
     temp_c = sorted(cnts, key=cv2.contourArea, reverse=True)
@@ -28,7 +28,7 @@ def AreaDetection(image):
                 cv2.drawContours(areaDetect,[box],-1,(255,255,255),-1)
 
     areaDetect = cv2.dilate(areaDetect,None,iterations=10)
-    cv2.imshow("dilate", areaDetect)
+    # cv2.imshow("dilate", areaDetect)
 
     cnts, hierarchy = cv2.findContours(areaDetect.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
     detect_c = sorted(cnts, key=cv2.contourArea, reverse=True)
