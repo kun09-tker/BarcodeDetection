@@ -103,7 +103,7 @@ def Main(path_image):
     image_detection,barcode = DrawContours(image.copy(),houghtransform)
     return image_detection,barcode
 
-path = "imgs/images (9).jpg"
+path = "Final_project/imgs/images (9).jpg"
 image_detection,barcode = Main(path)
 image = cv2.imread(path)
 cv2.imshow("BarcodeDetection",image_detection)
