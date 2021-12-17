@@ -96,7 +96,7 @@ def DrawContours(image,processing_img):
 def Main(path_image):
     image = cv2.imread(path_image)
     image = AreaDetection(image)
-    # image = RotationImage(image)
+    image = RotationImage(image)
     houghtransform = BarcodeDetection(image)
     image_detection,barcode = DrawContours(image.copy(),houghtransform)
     return image_detection,barcode
