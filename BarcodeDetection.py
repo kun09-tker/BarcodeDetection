@@ -3,10 +3,9 @@ import cv2
 
 def RotationImage(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    kernel = np.array([[0, -1, 0],
-                       [-1, 4, -1],
-                       [0, -1, 0]])
-    gray = cv2.filter2D(src=gray, ddepth=-1, kernel=kernel)
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(9, 9))
+    gray = clahe.apply(gray)
+    gray = cv2.Canny(gray,0,255)
     thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
     bitwise_not = cv2.bitwise_not(thresh)
     lines = cv2.HoughLinesP(thresh, 1, np.pi, 10, minLineLength=10, maxLineGap=7)
@@ -29,14 +28,16 @@ def RotationImage(image):
 
 def AreaDetection(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(9, 9))
+    gray = clahe.apply(gray)
     gradX = cv2.Sobel(gray, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
     gradY = cv2.Sobel(gray, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
     gradient = cv2.subtract(gradX, gradY)
     gradient = cv2.convertScaleAbs(gradient)
     blurred = cv2.blur(gradient, (3, 3))
-    (_, thresh) = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)
-    dilate = cv2.dilate(thresh, None, iterations=1)
-    thresh = cv2.subtract(dilate, thresh)
+    (_, thresh) = cv2.threshold(blurred, 150, 255, cv2.THRESH_BINARY)
+    thresh = cv2.erode(thresh,None,iterations=2)
+    cv2.imshow("text", thresh)
     cnts, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
     temp_c = sorted(cnts, key=cv2.contourArea, reverse=True)
     max = np.max([c.shape[0] for c in temp_c])
@@ -53,10 +54,9 @@ def AreaDetection(image):
 def BarcodeDetection(image):
     img = cv2.GaussianBlur(image, (1, 5), 0)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    kernel = np.array([[0, -1, 0],
-                       [-1, 4, -1],
-                       [0, -1, 0]])
-    gray = cv2.filter2D(src=gray, ddepth=-1, kernel=kernel)
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(9, 9))
+    gray = clahe.apply(gray)
+    gray = cv2.Canny(gray,100,255)
     (_, edges) = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 1))
     edges = cv2.morphologyEx(edges, cv2.MORPH_DILATE, kernel)
@@ -95,19 +95,19 @@ def DrawContours(image,processing_img):
 
 def Main(path_image):
     image = cv2.imread(path_image)
-    # cv2.imshow("Input1",image)
     image = AreaDetection(image)
-    image = RotationImage(image)
-    cv2.imshow("Input2",image)
-    houghtransform = BarcodeDetection(image)
-    image_detection,barcode = DrawContours(image.copy(),houghtransform)
-    return image_detection,barcode
+    cv2.imshow("A",image)
+    # image = RotationImage(image)
+    # houghtransform = BarcodeDetection(image)
+    # image_detection,barcode = DrawContours(image.copy(),houghtransform)
+    # return image_detection,barcode
 
-path = "Final_project/imgs/images (9).jpg"
-image_detection,barcode = Main(path)
-image = cv2.imread(path)
-cv2.imshow("BarcodeDetection",image_detection)
-barcode = cv2.resize(barcode,None,None,2,2,interpolation=cv2.INTER_CUBIC)
-cv2.imshow("Barcode",barcode)
+path = "imgs/image (10).png"
+Main(path)
+# image_detection,barcode = Main(path)
+# image = cv2.imread(path)
+# cv2.imshow("BarcodeDetection",image_detection)
+# barcode = cv2.resize(barcode,None,None,2,2,interpolation=cv2.INTER_CUBIC)
+# cv2.imshow("Barcode",barcode)
 cv2.waitKey(0)
 

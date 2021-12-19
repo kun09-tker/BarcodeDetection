@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+
 def count_children(hierarchy, parent, inner=False):
     if parent == -1:
         return 0
@@ -37,12 +38,7 @@ def AreaDetection(image):
     detect_c = sorted(cnts, key=cv2.contourArea, reverse=True)
     if len(detect_c) != 0:
         i=0
-        max = 0
         for detect in detect_c:
-            print(detect)
-            print("EndDetect")
-            if (hierarchy is not None) and (count_children(hierarchy[0],i)!=0):
-                if count_children(hierarchy[0],i) > max: max = count_children(hierarchy[0],i)
             if count_children(hierarchy[0],i) >= 35 and detect.shape[0] == detect_c[0].shape[0]:
                 x, y, w, h = cv2.boundingRect(detect)
                 rect = cv2.minAreaRect(detect)
@@ -50,6 +46,4 @@ def AreaDetection(image):
                 out = image.copy()[y:y + h, x:x + w]
                 cv2.drawContours(image,[box],-1,(0,255,0),2)
             i+=1
-        print(max)
-        print("break")
     return image,out
